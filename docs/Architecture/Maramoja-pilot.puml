@@ -11,14 +11,14 @@ participant Bitlipa As B
 participant "Driver Mpesa" As M
 
 group Do whenever MM changes key pair to sign JWTs (rarely)
-MM -> MM : create key pair\nfor JWT signing
-MM -> S ++ : public key
+MMb -> MMb : create key pair\nfor JWT signing
+MMb -> S ++ : public key
 S -> S: store public key
 deactivate S
 end group
 
 group Driver login
-MMd -> MM ++ : login()
+MMd -> MMb ++ : login()
 activate MMd
 return JWT
 deactivate MMd
