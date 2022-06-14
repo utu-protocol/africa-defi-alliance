@@ -1,0 +1,84 @@
+@startuml
+'https://plantuml.com/component-diagram
+
+cloud "Blockchain" AS BC {
+  interface "provide collateral" as PC
+  interface "use collateral" as UC
+  interface "liquidate collateral" as LC
+  component "Collateral pool" as CP
+  CP -u- PC
+  CP -l- UC
+  CP -u- LC
+
+  interface "provide liquidity" as PL
+  interface "borrow" as B
+  interface "pay back" as PB
+  component "Liquidity pool" as LP
+  LP -u- PL
+  LP -d- B
+  LP -d- PB
+  LP .l.> UC : request
+
+  LP-[hidden]r->UC
+}
+
+cloud "Internet" AS IN {
+  interface creditworthiness as W
+  interface "feed data" as FD
+  component "Creditworthiness provider " as SP
+  SP -l- W
+  SP -d- FD
+
+  component "Other data provider" as DP
+  DP .u.> FD : invoke
+
+
+  frame "Offtaker components" as OC {
+      component "Offtaker app" as OA
+      OA ..> B : request
+      OA ..> PB : invoke
+      OA .u.> FD : invoke
+
+      component "Loan manager" as LM
+      OA .u.> LM : use
+
+      component "Off-chain guarantor" as G
+      OA ..> G : use
+
+      note bottom of G
+           How will this be connected
+           to Liquidity pool? Via oracle?
+           Then needs to be trusted by
+           liquidity providers.
+      end note
+  }
+
+  note left of OC
+    Components in here
+    might or might not
+    be run by the same
+    party.
+  end note
+
+'  SP-[hidden]d-> OA
+'  OA-[hidden]d-> DP
+}
+
+LP ..> W: "invoke via oracle"
+'BC-[hidden]r-> IN
+
+frame "Actors" AS M {
+    actor "Collateral provider" AS CPR
+    CPR ..> PC : invoke
+
+    actor "Liquidity provider" AS LPR
+    LPR ..> PL : invoke
+
+    actor Borrower AS BR
+    BR .r.> OA : use
+    LM ..> BR : collect
+
+    actor Liquidator AS LT
+    LT ..> LC : invoke
+}
+@enduml

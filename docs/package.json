@@ -1,0 +1,12 @@
+{
+  "name": "Africa DeFi Alliance",
+  "version": "1.0.0",
+  "description": "Africa DeFi Alliance documentation and project-specific artefacts",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

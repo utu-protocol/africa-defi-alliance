@@ -1,0 +1,104 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+autonumber
+
+actor "Driver via MM Driver App" As MMd
+participant SympliFi As S
+participant UTU As U
+participant "MM Backend" As MMb
+participant Bitlipa As B
+participant "Driver Mpesa" As M
+
+group Do whenever MM changes key pair to sign JWTs (rarely)
+MM -> MM : create key pair\nfor JWT signing
+MM -> S ++ : public key
+S -> S: store public key
+deactivate S
+end group
+
+group Driver login
+MMd -> MM ++ : login()
+activate MMd
+return JWT
+deactivate MMd
+end group
+
+MMd -> S ++ : getAvailableAmount(applicant, JWT)
+activate MMd
+note left
+The applicant parameter contains
+profile data that is used to
+determine creditworthiness.
+
+In the MM advance payout use case,
+sending just id and phone number
+is sufficient, because this
+effectively only gets a driver's
+available balance according to
+their current earnings, not a "real"
+creditworthiness assessment.
+
+The JWT will be sent in the
+Authorization header using the
+Bearer scheme (also in step 14
+below).
+end note
+
+S -> S : verify JWT
+note left
+Verify the JWT wih the public key received
+earlier from MM.
+
+If verification fails, return error and stop
+(ommitted here for better readability).
+end note
+
+par
+S -> U ++ : getBorrowingPower(applicant, maxProbabilityOfDefault)
+U -> MMb ++ : getTotalNetEarnings(applicant)
+note left
+UTU doesn't invoke its proper creditworthiness model
+here, but only forwards the request to MM to get the
+driver's current total net earnings, which determines
+the amount which might be paid out.
+end note
+
+return totalNetEarnings(applicant)
+return borrowingPowerAmount(applicant)
+note left
+In the case where the driver can borrow
+100% of their totalNetEarnings without
+having to pay fees, borrowingPowerAmount
+ = totalNetEarnings.
+end note
+
+also
+S -> B ++ : getAvailableLiquidity()
+return availableAmount
+end par
+
+S -> S : reserve(availableAmount(applicant) = min(\navailableAmount, borrowingPowerAmount(applicant))
+
+return availableAmount(applicant)
+
+alt timeout?
+    S -> S : release(applicant, availableAmount)
+else
+    MMd -> S ++ : apply(applicant, amount, JWT)
+    S -> S : verify JWT
+
+    alt amount <= availableAmount
+      S -> B ++ : disburse(applicant, amount)
+      B -> M ++ : send(applicant, amount)
+      return confirmation(txid)
+      return confirmation(txid)
+      S -> MMd : confirmation(txid)
+      S -> S : release(applicant, availableAmount - amount)
+    else
+      S -> S : release(applicant, availableAmount)
+      S -> MMd : error: amount > availableAmount
+      deactivate S
+    end
+end
+@enduml
