@@ -81,6 +81,12 @@ end par
 S -> S : reserve(availableAmount(applicant) = min(\navailableAmount, borrowingPowerAmount(applicant))
 
 return availableAmount(applicant)
+note left
+TODO: add second return value describing
+interest rate and fee structure:
+interest rate, min interest, fixed fee
+interest rate bands?
+end note
 
 alt timeout?
     S -> S : release(applicant, availableAmount)
@@ -90,15 +96,38 @@ else
 
     alt amount <= availableAmount
       S -> B ++ : disburse(applicant, amount)
+
       B -> M ++ : send(applicant, amount)
-      return confirmation(txid)
-      return confirmation(txid)
-      S -> MMd : confirmation(txid)
-      S -> S : release(applicant, availableAmount - amount)
+      M -> B : tx pending(txid)
+      B -> S : tx pending(txid)
+      deactivate B
+      S -> MMd : tx pending(txid)
     else
       S -> S : release(applicant, availableAmount)
       S -> MMd : error: amount > availableAmount
       deactivate S
     end
 end
+
+M --> B ++ : result(txid)
+deactivate M
+note left
+    Result can be either tx completed
+    or failure. Simplify and MM Backend
+    are expected to do the appropriate
+    things in each case.
+
+    But what if this never happens?
+    Should the reserved amount
+    be released after some timeout?
+end note
+B --> S ++ : result(txid)
+deactivate B
+S --> MMb ++ : result(applicant, txid)
+S -> S : release(applicant, availableAmount)
+deactivate S
+MMb --> MMd : result(txid)
+deactivate MMb
+MMd --> MMd : Show result to driver
+deactivate MMd
 @enduml
