@@ -74,11 +74,13 @@ having to pay fees, borrowingPowerAmount
 end note
 
 also
-S -> B ++ : getAvailableLiquidity()
+S -> B ++ : getAmountInUSDC()
+return availableAmountInUSDC
+
+also
+S -> S ++ : getAvailableLiquidity()
 return availableAmount
 end par
-
-S -> S : reserve(availableAmount(applicant) = min(\navailableAmount, borrowingPowerAmount(applicant))
 
 return availableAmount(applicant)
 note left
@@ -88,9 +90,7 @@ interest rate, min interest, fixed fee
 interest rate bands?
 end note
 
-alt timeout?
-    S -> S : release(applicant, availableAmount)
-else
+
     MMd -> S ++ : apply(applicant, amount, JWT)
     S -> S : verify JWT
 
@@ -103,11 +103,10 @@ else
       deactivate B
       S -> MMd : tx pending(txid)
     else
-      S -> S : release(applicant, availableAmount)
       S -> MMd : error: amount > availableAmount
       deactivate S
     end
-end
+
 
 M --> B ++ : result(txid)
 deactivate M
@@ -121,10 +120,8 @@ note left
     Should the reserved amount
     be released after some timeout?
 end note
-B --> S ++ : result(txid)
+B --> MMb ++ : result(txid)
 deactivate B
-S --> MMb ++ : result(applicant, txid)
-S -> S : release(applicant, availableAmount)
 deactivate S
 MMb --> MMd : result(txid)
 deactivate MMb
