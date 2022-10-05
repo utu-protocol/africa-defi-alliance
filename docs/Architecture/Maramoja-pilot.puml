@@ -9,6 +9,7 @@ participant UTU As U
 participant "MM Backend" As MMb
 participant Bitlipa As B
 participant "Driver Mpesa" As M
+participant "On-chain Pool" As P
 
 group Do once for each driver
 MMb -> B : postDriverWallet(driverId)
@@ -22,7 +23,7 @@ MMb -> S ++ : public key
 S -> S: store public key
 deactivate S
 
-Mmb -> MMd : new JWT(walletAddress)\nfor logged in drivers
+MMb -> MMd : new JWT(walletAddress)\nfor logged in drivers
 note left
 Optional: in the first version,
 we could just ask drivers to
@@ -94,7 +95,7 @@ S -> B ++ : getAmountInUSDC()
 return availableAmountInUSDC
 
 also
-S -> S ++ : getAvailableLiquidity()
+S -> P ++ : getAvailableLiquidity()
 return availableAmount
 end par
 
