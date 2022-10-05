@@ -10,16 +10,26 @@ participant "MM Backend" As MMb
 participant Bitlipa As B
 participant "Driver Mpesa" As M
 
-group Do whenever MM changes key pair to sign JWTs (rarely)
-MMb -> MMb : create key pair\nfor JWT signing
-MMb -> S ++ : public key
-S -> S: store public key
-deactivate S
-end group
-
 group Do once for each driver
 MMb -> B : postDriverWallet(driverId)
 return walletAddress
+end group
+
+group Do whenever MM changes key pair to sign JWTs (rarely)
+MMb -> MMb ++: create key pair\nfor JWT signing
+
+MMb -> S ++ : public key
+S -> S: store public key
+deactivate S
+
+Mmb -> MMd : new JWT(walletAddress)\nfor logged in drivers
+note left
+Optional: in the first version,
+we could just ask drivers to
+restart the app or re-login if
+a Simplify call fails.
+end note
+
 end group
 
 group Driver login
