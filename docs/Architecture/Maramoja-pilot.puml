@@ -17,9 +17,15 @@ S -> S: store public key
 deactivate S
 end group
 
+group Do once for each driver
+MMb -> B : postDriverWallet(driverId)
+return walletAddress
+end group
+
 group Driver login
 MMd -> MMb ++ : login()
 activate MMd
+MMb -> MMb: create JWT(walletAddress)\nsigned by MM key
 return JWT
 deactivate MMd
 end group
@@ -117,8 +123,6 @@ note left
     things in each case.
 
     But what if this never happens?
-    Should the reserved amount
-    be released after some timeout?
 end note
 B --> MMb ++ : result(txid)
 deactivate B
